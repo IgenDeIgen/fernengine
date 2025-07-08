@@ -1,2 +1,0 @@
-/usr/bin/ar qc libfern.a CMakeFiles/fern.dir/source/fern_error.c.o CMakeFiles/fern.dir/source/display.c.o CMakeFiles/fern.dir/source/model.c.o CMakeFiles/fern.dir/source/shader.c.o CMakeFiles/fern.dir/source/material.c.o CMakeFiles/fern.dir/source/loader.c.o CMakeFiles/fern.dir/dependencies/glad/src/gl.c.o
-/usr/bin/ranlib libfern.a
