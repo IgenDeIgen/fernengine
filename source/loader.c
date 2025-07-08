@@ -1,44 +1,78 @@
 #include "../include/fern.h"
-
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
-s32 load_filesrc(char* file_path, filesrc_t* filesrc) {
-	
-	FILE* f = fopen(file_path, "rb");
-	
+fern_error_t read_file_all(char **contents, u32* size, const char* path) {
+	FILE* f = fopen(path, "rb");
+
+	char* filecontents;
+	u32 filesize = 0;
 	if(f) {
 		fseek(f, 0, SEEK_END);
-		filesrc->size = ftell(f);
+		filesize = ftell(f);
 		fseek(f, 0, SEEK_SET);
 		
-		filesrc->buffer = (char*)malloc(filesrc->size + 1);
-		if(!filesrc->buffer) {
+		filecontents = (char*)malloc((filesize) + 1);
+		if(!filecontents) {
 			fclose(f);
-			fprintf(stderr, "Error: failed to allocate filesrc buffer for: %s\n", file_path);
-			return FILESRC_ALLOC_FAILED; // Failed to allocate buffer
+			return error_msg(FERN_ALLOC_FAILED, NULL); // Failed to allocate 
 		}
 		
-		size_t read_size = fread(filesrc->buffer, 1, filesrc->size, f);
-		if(read_size != filesrc->size) {
-			free(filesrc->buffer);
+		size_t read_size = fread(filecontents, 1, filesize, f);
+		if(read_size != filesize) {
+			free(filecontents);
 			fclose(f);
-			fprintf(stderr, "Error: failed to read file: %s\n", file_path);
-			return FILESRC_READ_ERROR; // File read error
+			return error_msg(
+				FERN_FILE_READ_FAILED,
+				"File: %s\n", path
+			); // File read error
 		}
 
-		filesrc->buffer[filesrc->size] = '\0';
+		filecontents[filesize] = '\0';
+		
+		*contents = filecontents;
+		*size = filesize;
 	}
 	else {
-		fprintf(stderr, "Error: file doesn't exist: %s\n", file_path);
-		return FILESRC_FILE_NOT_EXISTS; // File doesn't exist
+		return error_msg(FERN_FILE_NOT_FOUND, "File: %s\n", path);
 	}
 
 	fclose(f);
-	return FILESRC_OK;
+	return FERN_ERROR_OK;
 }
 
-void destroy_filesrc(filesrc_t* filesrc) {
-	filesrc->size = 0;
-	free(filesrc->buffer);
+fern_error_t load_obj(model_t *model, const char *path) {
+	FILE* f = fopen(path, "rb");
+
+	mesh_t mesh;
+
+	vec3* positions; u32 position_count;
+	vec2* uvs; u32 uv_count;
+	vec3* normals; u32 normal_count;
+
+	if(f) {
+		// 1. pass - get number of entries
+		while(1){
+			char linetype[3];
+			s32 status = fscanf(f, "%s", linetype);
+			if(status == EOF) { break; }
+
+			if(strcmp(linetype, "v") == 0) {
+				
+			}
+			else if(strcmp(linetype, "vt") == 0) {
+
+			}
+			else if(strcmp(linetype, "vn") == 0) {
+	
+			}
+		}
+	}
+	else {
+		return error_msg(FERN_FILE_NOT_FOUND, "File: %s\n", path);
+	}
+
+	fclose(f);
+	
+	return FERN_ERROR_OK;
 }

@@ -1,9 +1,8 @@
-#ifndef ENGINE_H
-#define ENGINE_H
+#ifndef FERN_H
+#define FERN_H
 
-// Standard types
-#include "cglm/types.h"
 #include <stdint.h>
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -17,157 +16,162 @@ typedef int64_t s64;
 typedef float f32;
 typedef double f64;
 
-typedef struct {
-	f32 r, g, b, a;
-} color_rgba;
-
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+
 #include <cglm/cglm.h>
 
-// File loading utilities
 
-typedef struct {
-	char* buffer;
-	size_t size;
-} filesrc_t;
+// Error code type
+//
+// FERN_ERROR_OK (0) when no error occured
+typedef enum fern_error {
+	
+	FERN_ERROR_OK = 0,
 
-#define FILESRC_OK 1
-#define FILESRC_FILE_NOT_EXISTS -1
-#define FILESRC_ALLOC_FAILED -2
-#define FILESRC_READ_ERROR -3 
+	FERN_GLFW_INITIALIZATION_FAILED,
+	FERN_WINDOW_CREATION_FAILED,
+	FERN_GLAD_INITIALIZATION_FAILED,
+	
+	FERN_FILE_NOT_FOUND,
+	FERN_FILE_READ_FAILED,
+	
+	FERN_ALLOC_FAILED,
 
-s32 load_filesrc(char* file_path, filesrc_t* filesrc);
-void destroy_filesrc(filesrc_t* filesrc);
+	FERN_SHADER_COMPILATION_FAILED,
+	FERN_LINKING_SHADERS_FAILED,
 
-// Shaders
+	FERN_INCORRECT_MATERIAL,
+	FERN_UNKNOWN_MATERIAL_TYPE
+
+} fern_error_t;
+
+typedef struct rgba {
+	f32 r, g, b, a;
+} rgba_t;
+
+typedef struct window_info {
+	u32 width, height;
+	char* title;
+	rgba_t clear_color;
+} window_info_t;
+
+typedef struct renderer {
+	GLFWwindow* glfw_window;
+} renderer_t;
+
+typedef struct vertex {
+	vec3 position;
+	vec2 uv;
+	vec3 normal;
+} vertex_t;
+
+typedef struct mesh {
+	vertex_t* vertices;
+	u32* indices;
+	u32 vertex_count, index_count;
+} mesh_t;
 
 typedef u32 shader_t;
 
-shader_t create_shader(
-		char* vertex_shader_path,
-		char* fragment_shader_path
-		);
-shader_t create_shader_code(
-		const char* const* vertex_shader_code,
-		const char* const* fragment_shader_code
-		);
+typedef enum material_property_type {
 
-void shader_set_mat4(shader_t* shader, const char* name, mat4 mat);
-void shader_set_vec3(shader_t* shader, const char* name, vec3 vec);
-void shader_set_vec4(shader_t* shader, const char* name, vec4 vec);
-void shader_set_int(shader_t* shader, const char* name, s32 val);
+	MATERIAL_PROPERTY_TYPE_MAT4
 
-void destroy_shader(shader_t* shader);
+} material_property_type_t;
 
+typedef struct material_property {
+	const char* name;
+	material_property_type_t type;
+	void* valueptr;
+} material_property_t;
 
-// Renderer and windowing
+typedef struct material {
+	shader_t shader;
+	material_property_t* properties;
+	u32 property_count;
+} material_t;
 
-typedef struct {
-	GLFWwindow* glfw_window;
-
-	mat4 view, projection;
-} renderer_t;
-
-s32 init_renderer(
-		renderer_t* renderer,
-		u32 window_width,
-		u32 window_height,
-		char* window_title
-	);
-
-void quit_renderer(renderer_t* renderer);
-s32 renderer_should_close(renderer_t* renderer);
-void set_clear_color(renderer_t* renderer, color_rgba color);
-void render_clear(renderer_t* renderer);
-void render_swap(renderer_t* renderer);
-void poll_events();
-
-
-// Input
-
-s32 input_keydown(renderer_t* renderer, s32 keycode);
-
-
-// Transform
-
-typedef struct {
-	vec3 position;
-	versor rotation;
-	vec3 scale;
-
-	mat4 matrix;
-} transform_t;
-
-void transform_translate(transform_t* transform, vec3 v);
-
-void transform_rotate(transform_t* transform, vec3 axis, f32 angle);
-
-void transform_scale(transform_t* transform, vec3 s);
-void transform_scalef(transform_t* transform, f32 s);
-
-void transform_apply(transform_t* transform);
-
-
-// Camera
-
-typedef struct {
-	transform_t transform;
-} camera_t;
-
-
-// Textures
-
-typedef struct {
-	u32 id;
-	u32 width, height;
-} texture_t;
-
-void create_texture_from_image(const char* path, texture_t* texture);
-void destroy_texture(texture_t* texture);
-void use_texture(texture_t* texture);
-
-
-// Models and meshes
-
-typedef struct {
-	vec3 postion;
-	vec2 uv;
-} vertex_t;
-
-typedef struct {
-	vertex_t* vertices;
-	u32 vertex_count;
-	u32* indices;
-	u32 index_count;
-} mesh_t;
-
-typedef struct {
+typedef struct model {
 	u32 VBO, VAO, EBO;
-	u32 vertex_count;
-	u32 index_count;
-	u32 shader;
-	transform_t transform;
+	u32 vertex_count, index_count;
+	material_t* material;
 } model_t;
 
-void create_model(
-		mesh_t* mesh,
-		shader_t shader,
-		model_t* out
-		);
+typedef struct object {
+	model_t model;
+} object_t;
 
+typedef struct shader_source {
+	char* shader_code;
+	u32 size;
+} shader_source_t;
+
+
+const char* get_error_str(fern_error_t error);
+
+fern_error_t error_msg(fern_error_t type, const char* msg_format, ...);
+
+fern_error_t read_file_all(char** contents, u32* size, const char* path);
+
+//	Creates and initializes a renderer_t and creates a corresponding
+//	window with given parameters.
+fern_error_t create_renderer(renderer_t* renderer, window_info_t window_info);
+
+// Frees resources associated with the renderer
+void destroy_renderer(renderer_t* renderer);
+
+// Returns true when the user closes the window
+u32 renderer_should_close(renderer_t *renderer);
+
+// Clears the buffer with the specified color in the renderer
+void clear_renderer(renderer_t* renderer);
+
+// Swaps the render buffers
+void swap_renderer(renderer_t* renderer);
+
+// Polls window events
+void poll_events();
+
+// Binds a shader for rendering and supplies it with the required material properties
+fern_error_t use_material(material_t* material);
+
+// Creates a model_t from a given mesh and shader, allocating the data on
+// the GPU
+fern_error_t create_model(model_t* model, mesh_t* mesh, material_t* material);
+
+// Frees up the corresponding GPU resources
 void destroy_model(model_t* model);
+
+// Renders a model
 void render_model(model_t* model);
 
-typedef struct {
-	u32 width, height;
-	f32 x_offset, y_offset;
-	f32 line_offset;
-} instance_grid_t;
+// Loads shader source code from specified path
+//
+// WARNING: always use destroy_shader_source to free this resource
+fern_error_t load_shader_source(shader_source_t* source, const char* path);
+// Frees resources associated with a shader_source_t
+void destroy_shader_source(shader_source_t* source);
 
-void render_instance_grid(instance_grid_t* grid, model_t* model, shader_t instance_shader);
+// Creates a shader program from given shader sources
+fern_error_t create_shader_from_source(
+	shader_t* shader,
+	shader_source_t vertex_source,
+	shader_source_t fragment_source
+);
 
-// Primitives
-void create_primitive_rect(f32 width, f32 height, shader_t shader, model_t* out);
+// Creates a shader program from the given source files
+fern_error_t create_shader(
+	shader_t* shader,
+	const char* vertex_path,
+	const char* fragment_path
+);
+
+// Destroys the shader program
+void destroy_shader(shader_t *shader);
+
+fern_error_t load_obj(model_t* model, const char* path);
+
+#define FERN_ERROR_LOG
 
 #endif

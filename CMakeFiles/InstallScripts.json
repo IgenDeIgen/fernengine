@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/Marci/coding/fernengine/cmake_install.cmake",
+		"/home/Marci/coding/fernengine/dependencies/glfw/cmake_install.cmake",
+		"/home/Marci/coding/fernengine/dependencies/glfw/src/cmake_install.cmake",
+		"/home/Marci/coding/fernengine/dependencies/glfw/docs/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

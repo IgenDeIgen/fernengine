@@ -1,16 +1,16 @@
 #include "../include/fern.h"
 
-void create_model(mesh_t* mesh, shader_t shader, model_t* output) {
+fern_error_t create_model(model_t* model, mesh_t* mesh, material_t* material) {
 	// Generate OpenGL buffers
-	glGenVertexArrays(1, &output->VAO);
-	glGenBuffers(1, &output->VBO);
-	glGenBuffers(1, &output->EBO);
+	glGenVertexArrays(1, &model->VAO);
+	glGenBuffers(1, &model->VBO);
+	glGenBuffers(1, &model->EBO);
 
 	// Bind VAO
-	glBindVertexArray(output->VAO);
+	glBindVertexArray(model->VAO);
 
 	// Load vertex and index data into respective buffers
-	glBindBuffer(GL_ARRAY_BUFFER, output->VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, model->VBO);
 	glBufferData(
 		GL_ARRAY_BUFFER,
 		sizeof(vertex_t) * mesh->vertex_count,
@@ -18,7 +18,7 @@ void create_model(mesh_t* mesh, shader_t shader, model_t* output) {
 		GL_STATIC_DRAW
 	);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, output->EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->EBO);
 	glBufferData(
 		GL_ELEMENT_ARRAY_BUFFER,
 		sizeof(u32) * mesh->index_count,
@@ -27,31 +27,35 @@ void create_model(mesh_t* mesh, shader_t shader, model_t* output) {
 	);
 
 	// Initalize model data
-	output->shader = shader;
-	output->vertex_count = mesh->vertex_count;
-	output->index_count = mesh->index_count;
+	model->material = material;
+	model->vertex_count = mesh->vertex_count;
+	model->index_count = mesh->index_count;
 
 	// Fill vertex attributes
+	//
 	// Position vertex attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void*)0);
+	glVertexAttribPointer(
+		0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void*)0
+	);
 	glEnableVertexAttribArray(0);
+
 	// UV vertex attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void*)(sizeof(vec3)));
+	glVertexAttribPointer(
+		1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void*)(sizeof(vec3))
+	);
 	glEnableVertexAttribArray(1);
+
+	// Vertex normal attribute
+	glVertexAttribPointer(
+		2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+		(void*)(sizeof(vec3) + sizeof(vec2))
+	);
 
 	// Unbind vertex arrays
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	// Initialize model matrix
-	glm_mat4_identity(output->transform.matrix);
-}
-
-void render_model(model_t* model) {
-	glUseProgram(model->shader);
-	shader_set_mat4(&model->shader, "u_model", model->transform.matrix);
-	glBindVertexArray(model->VAO);
-	glDrawElements(GL_TRIANGLES, model->index_count, GL_UNSIGNED_INT, 0);
+	return FERN_ERROR_OK;
 }
 
 void destroy_model(model_t* model) {
@@ -60,27 +64,8 @@ void destroy_model(model_t* model) {
 	glDeleteBuffers(1, &model->EBO);
 }
 
-// Instance Grid
-
-void render_instance_grid(
-	instance_grid_t *grid,
-	model_t *model,
-	shader_t instance_shader
-) {
-	
-	glUseProgram(instance_shader);
+void render_model(model_t *model) {
+	use_material(model->material);
 	glBindVertexArray(model->VAO);
-	
-	shader_set_mat4(&instance_shader, "model", model->transform.matrix);
-
-	vec4 grid_offsets = {
-		grid->x_offset,
-		grid->y_offset,
-		grid->line_offset,
-		(f32)grid->width
-	};
-	shader_set_vec4(&instance_shader, "grid_offsets", grid_offsets);
-
-	glDrawElementsInstanced(GL_TRIANGLES, model->index_count, GL_UNSIGNED_INT, 0, grid->width * grid->height);
+	glDrawElements(GL_TRIANGLES, model->index_count, GL_UNSIGNED_INT, 0);
 }
-
