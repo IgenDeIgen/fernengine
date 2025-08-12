@@ -1,6 +1,6 @@
 #include "../include/fern.h"
 
-fern_error_t create_model(model_t* model, mesh_t* mesh, material_t* material) {
+frnError_t CreateModel(Model* model, Mesh* mesh, Material* material) {
 	// Generate OpenGL buffers
 	glGenVertexArrays(1, &model->VAO);
 	glGenBuffers(1, &model->VBO);
@@ -13,7 +13,7 @@ fern_error_t create_model(model_t* model, mesh_t* mesh, material_t* material) {
 	glBindBuffer(GL_ARRAY_BUFFER, model->VBO);
 	glBufferData(
 		GL_ARRAY_BUFFER,
-		sizeof(vertex_t) * mesh->vertex_count,
+		sizeof(Vertex) * mesh->vertex_count,
 		mesh->vertices,
 		GL_STATIC_DRAW
 	);
@@ -35,19 +35,19 @@ fern_error_t create_model(model_t* model, mesh_t* mesh, material_t* material) {
 	//
 	// Position vertex attribute
 	glVertexAttribPointer(
-		0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void*)0
+		0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0
 	);
 	glEnableVertexAttribArray(0);
 
 	// UV vertex attribute
 	glVertexAttribPointer(
-		1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (void*)(sizeof(vec3))
+		1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(vec3))
 	);
 	glEnableVertexAttribArray(1);
 
 	// Vertex normal attribute
 	glVertexAttribPointer(
-		2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+		2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
 		(void*)(sizeof(vec3) + sizeof(vec2))
 	);
 
@@ -58,14 +58,14 @@ fern_error_t create_model(model_t* model, mesh_t* mesh, material_t* material) {
 	return FERN_ERROR_OK;
 }
 
-void destroy_model(model_t* model) {
+void DestroyModel(Model* model) {
 	glDeleteVertexArrays(1, &model->VAO);
 	glDeleteBuffers(1, &model->VBO);
 	glDeleteBuffers(1, &model->EBO);
 }
 
-void render_model(model_t *model) {
-	use_material(model->material);
+void RenderModel(Model *model) {
+	UseMaterial(model->material);
 	glBindVertexArray(model->VAO);
 	glDrawElements(GL_TRIANGLES, model->index_count, GL_UNSIGNED_INT, 0);
 }

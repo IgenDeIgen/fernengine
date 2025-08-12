@@ -6,11 +6,11 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-u32 renderer_should_close(renderer_t *renderer) {
+u32 RendererShouldClose(Renderer *renderer) {
 	return glfwWindowShouldClose(renderer->glfw_window);
 }
 
-fern_error_t create_renderer(renderer_t* renderer, window_info_t window_info) {
+frnError_t CreateRenderer(Renderer* renderer, WindowInfo window_info) {
 	// Initializing GLFW
 	if(!glfwInit()) { return error_msg(FERN_GLFW_INITIALIZATION_FAILED, NULL); }
 	
@@ -58,19 +58,19 @@ fern_error_t create_renderer(renderer_t* renderer, window_info_t window_info) {
 	return FERN_ERROR_OK;
 }
 
-void destroy_renderer(renderer_t *renderer) {
+void DestroyRenderer(Renderer *renderer) {
 	glfwDestroyWindow(renderer->glfw_window);
 	glfwTerminate();
 }
 
-void clear_renderer(renderer_t *renderer) {
+void ClearRenderer(Renderer *renderer) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void swap_renderer(renderer_t *renderer) {
+void SwapRenderer(Renderer *renderer) {
 	glfwSwapBuffers(renderer->glfw_window);
 }
 
-void poll_events() {
+void PollEvents() {
 	glfwPollEvents();
 }

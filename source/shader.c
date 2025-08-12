@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-fern_error_t load_shader_source(shader_source_t *source, const char *path) {
+frnError_t LoadShaderSource(ShaderSource *source, const char *path) {
 	char* contents;
 	u32 size;
 	read_file_all(&contents, &size, path);
@@ -11,12 +11,12 @@ fern_error_t load_shader_source(shader_source_t *source, const char *path) {
 	return FERN_ERROR_OK;
 }
 
-void destroy_shader_source(shader_source_t *source) {
+void DestroyShaderSource(ShaderSource *source) {
 	source->size = 0;
 	free(source->shader_code);
 }
 
-static fern_error_t compile_component(u32 component) {
+static frnError_t compile_component(u32 component) {
 	glCompileShader(component);
 
 	s32 success;
@@ -34,9 +34,9 @@ static fern_error_t compile_component(u32 component) {
 	else return FERN_ERROR_OK;
 }
 
-static fern_error_t create_shader_component(
+static frnError_t create_shader_component(
 	u32* component,
-	shader_source_t src,
+	ShaderSource src,
 	const s32 shader_type
 ) {
 	u32 c = glCreateShader(shader_type);
@@ -45,7 +45,7 @@ static fern_error_t create_shader_component(
 	return compile_component(c);
 }
 
-static fern_error_t link_components(shader_t shader, u32 vertex, u32 fragment) {
+static frnError_t link_components(Shader shader, u32 vertex, u32 fragment) {
 	glAttachShader(shader, vertex);
 	glAttachShader(shader, fragment);
 
@@ -66,16 +66,16 @@ static fern_error_t link_components(shader_t shader, u32 vertex, u32 fragment) {
 	return FERN_ERROR_OK;
 }
 
-fern_error_t create_shader_from_source( shader_t* shader, shader_source_t vertex_source, shader_source_t fragment_source ) {
+frnError_t CreateShaderFromSource( Shader* shader, ShaderSource vertex_source, ShaderSource fragment_source ) {
 	
 	u32 vertex_shader, fragment_shader;
 
-	fern_error_t vertex_status = create_shader_component(
+	frnError_t vertex_status = create_shader_component(
 		&vertex_shader,
 		vertex_source,
 		GL_VERTEX_SHADER
 	);
-	fern_error_t fragment_status = create_shader_component(
+	frnError_t fragment_status = create_shader_component(
 		&fragment_shader,
 		fragment_source,
 		GL_FRAGMENT_SHADER
@@ -84,9 +84,9 @@ fern_error_t create_shader_from_source( shader_t* shader, shader_source_t vertex
 	if(vertex_status != FERN_ERROR_OK) { return vertex_status; }
 	if(fragment_status != FERN_ERROR_OK) { return fragment_status; }
 
-	shader_t out = glCreateProgram();
+	Shader out = glCreateProgram();
 
-	fern_error_t linking_status = link_components(out, vertex_shader, fragment_shader);
+	frnError_t linking_status = link_components(out, vertex_shader, fragment_shader);
 	if(linking_status != FERN_ERROR_OK) { return linking_status; }
 		
 	glDeleteShader(vertex_shader);
@@ -97,38 +97,38 @@ fern_error_t create_shader_from_source( shader_t* shader, shader_source_t vertex
 	return FERN_ERROR_OK;
 }
 
-fern_error_t create_shader(
-	shader_t* shader,
+frnError_t CreateShader(
+	Shader* shader,
 	const char* vertex_path,
 	const char* fragment_path
 ) {
 	
 	u32 vertex_shader, fragment_shader;
 
-	shader_source_t src;
+	ShaderSource src;
 
-	load_shader_source(&src, vertex_path);
-	fern_error_t vertex_status = create_shader_component(
+	LoadShaderSource(&src, vertex_path);
+	frnError_t vertex_status = create_shader_component(
 		&vertex_shader,
 		src,
 		GL_VERTEX_SHADER
 	);
 
-	load_shader_source(&src, fragment_path);
-	fern_error_t fragment_status = create_shader_component(
+	LoadShaderSource(&src, fragment_path);
+	frnError_t fragment_status = create_shader_component(
 		&fragment_shader,
 		src,
 		GL_FRAGMENT_SHADER
 	);
 
-	destroy_shader_source(&src);
+	DestroyShaderSource(&src);
 
 	if(vertex_status != FERN_ERROR_OK) { return vertex_status; }
 	if(fragment_status != FERN_ERROR_OK) { return fragment_status; }
 
-	shader_t out = glCreateProgram();
+	Shader out = glCreateProgram();
 	
-	fern_error_t linking_status = link_components(out, vertex_shader, fragment_shader);
+	frnError_t linking_status = link_components(out, vertex_shader, fragment_shader);
 	if(linking_status != FERN_ERROR_OK) { return linking_status; }
 	
 	glDeleteShader(vertex_shader);
@@ -139,6 +139,6 @@ fern_error_t create_shader(
 	return FERN_ERROR_OK;
 }
 
-void destroy_shader(shader_t *shader) {
+void DestroyShader(Shader *shader) {
 	glDeleteProgram(*shader);
 }

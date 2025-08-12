@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-const char* get_error_str(fern_error_t error) {
+const char* get_error_str(frnError_t error) {
 	switch(error) {
 		case FERN_ERROR_OK:
 			return "No error";
@@ -26,10 +26,12 @@ const char* get_error_str(fern_error_t error) {
 			return "Unknown material type";
 		case FERN_INCORRECT_MATERIAL:
 			return "Incorrect material";
+		case FERN_UNSUPPORTED_FORMAT:
+			return "Invalid format";
    }
 }
 
-fern_error_t error_msg(fern_error_t type, const char* msg_format, ...) {
+frnError_t error_msg(frnError_t type, const char* msg_format, ...) {
 #ifdef FERN_ERROR_LOG
 	fprintf(stderr, "ERROR: %s\n", get_error_str(type));
 	if(msg_format == NULL) { return type; }

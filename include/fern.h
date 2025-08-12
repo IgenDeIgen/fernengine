@@ -25,7 +25,7 @@ typedef double f64;
 // Error code type
 //
 // FERN_ERROR_OK (0) when no error occured
-typedef enum fern_error {
+typedef enum {
 	
 	FERN_ERROR_OK = 0,
 
@@ -42,135 +42,186 @@ typedef enum fern_error {
 	FERN_LINKING_SHADERS_FAILED,
 
 	FERN_INCORRECT_MATERIAL,
-	FERN_UNKNOWN_MATERIAL_TYPE
+	FERN_UNKNOWN_MATERIAL_TYPE,
 
-} fern_error_t;
+	FERN_UNSUPPORTED_FORMAT
 
-typedef struct rgba {
+} frnError_t;
+
+typedef struct {
 	f32 r, g, b, a;
 } rgba_t;
 
-typedef struct window_info {
+typedef struct {
 	u32 width, height;
 	char* title;
 	rgba_t clear_color;
-} window_info_t;
+} WindowInfo;
 
-typedef struct renderer {
+typedef struct {
 	GLFWwindow* glfw_window;
-} renderer_t;
+} Renderer;
 
-typedef struct vertex {
+typedef struct {
 	vec3 position;
 	vec2 uv;
 	vec3 normal;
-} vertex_t;
+} Vertex;
 
-typedef struct mesh {
-	vertex_t* vertices;
+typedef struct {
+	Vertex* vertices;
 	u32* indices;
 	u32 vertex_count, index_count;
-} mesh_t;
+} Mesh;
 
-typedef u32 shader_t;
+typedef u32 Shader;
 
-typedef enum material_property_type {
+typedef enum {
+	MATERIAL_PROPERTY_TYPE_MAT4,
+	MATERIAL_PROPERTY_TYPE_TEXTURE2D,
+	MATERIAL_PROPERTY_TYPE_INT
+} MaterialPropertyType;
 
-	MATERIAL_PROPERTY_TYPE_MAT4
-
-} material_property_type_t;
-
-typedef struct material_property {
+typedef struct {
 	const char* name;
-	material_property_type_t type;
+	MaterialPropertyType type;
 	void* valueptr;
-} material_property_t;
+} MaterialProperty;
 
-typedef struct material {
-	shader_t shader;
-	material_property_t* properties;
+typedef struct {
+	Shader shader;
+	MaterialProperty* static_properties;
+	u32 dynamic_property_count;
+	MaterialProperty* dynamic_properties;
 	u32 property_count;
-} material_t;
+} Material;
 
-typedef struct model {
+typedef struct {
 	u32 VBO, VAO, EBO;
 	u32 vertex_count, index_count;
-	material_t* material;
-} model_t;
+	Material* material;
+} Model;
 
-typedef struct object {
-	model_t model;
-} object_t;
+typedef struct {
+	Model model;
+} Object;
 
-typedef struct shader_source {
+typedef struct {
 	char* shader_code;
 	u32 size;
-} shader_source_t;
+} ShaderSource;
+
+typedef enum {
+	PIXELFORMAT_RGB = GL_RGB,
+	PIXELFORMAT_RGBA = GL_RGBA,
+} PixelFormat;
+
+typedef enum {
+	TEXTUREWRAPMODE_REPEAT = GL_REPEAT,
+	TEXTUREWRAPMODE_MIRRORED_REPEAT = GL_MIRRORED_REPEAT,
+	TEXTUREWRAPMODE_CLAMP_EDGE = GL_CLAMP_TO_EDGE,
+	TEXTUREWRAPMODE_CLAMP_BORDER = GL_CLAMP_TO_BORDER
+} TextureWrapMode;
+
+typedef enum {
+	TEXTUREFILTERMODE_LINEAR = GL_LINEAR,
+	TEXTUREFILTERMODE_NEAREST = GL_NEAREST
+} TextureFilterMode;
+
+typedef struct {
+	TextureWrapMode wrap_s, wrap_t;
+	TextureFilterMode filter_mag, filter_min;
+} TextureParams;
+
+typedef struct texture {
+	u32 id;
+	u32 width, height;
+} Texture;
 
 
-const char* get_error_str(fern_error_t error);
+const char* get_error_str(frnError_t error);
 
-fern_error_t error_msg(fern_error_t type, const char* msg_format, ...);
+frnError_t error_msg(frnError_t type, const char* msg_format, ...);
 
-fern_error_t read_file_all(char** contents, u32* size, const char* path);
+frnError_t read_file_all(char** contents, u32* size, const char* path);
 
 //	Creates and initializes a renderer_t and creates a corresponding
 //	window with given parameters.
-fern_error_t create_renderer(renderer_t* renderer, window_info_t window_info);
+frnError_t CreateRenderer(Renderer* renderer, WindowInfo window_info);
 
 // Frees resources associated with the renderer
-void destroy_renderer(renderer_t* renderer);
+void DestroyRenderer(Renderer* renderer);
 
 // Returns true when the user closes the window
-u32 renderer_should_close(renderer_t *renderer);
+u32 RendererShouldClose(Renderer *renderer);
 
 // Clears the buffer with the specified color in the renderer
-void clear_renderer(renderer_t* renderer);
+void ClearRenderer(Renderer* renderer);
 
 // Swaps the render buffers
-void swap_renderer(renderer_t* renderer);
+void SwapRenderer(Renderer* renderer);
 
 // Polls window events
-void poll_events();
+void PollEvents();
+
+frnError_t LoadMaterialProperty(MaterialProperty property, Shader shader);
+
+frnError_t AddMaterialProperty(
+	Material* material,
+	MaterialPropertyType type,
+	const char* name,
+	void* ptr,
+	u32 dynamic
+);
 
 // Binds a shader for rendering and supplies it with the required material properties
-fern_error_t use_material(material_t* material);
+frnError_t UseMaterial(Material* material);
+
+void DestroyMaterial(Material* material);
 
 // Creates a model_t from a given mesh and shader, allocating the data on
 // the GPU
-fern_error_t create_model(model_t* model, mesh_t* mesh, material_t* material);
+frnError_t CreateModel(Model* model, Mesh* mesh, Material* material);
 
 // Frees up the corresponding GPU resources
-void destroy_model(model_t* model);
+void DestroyModel(Model* model);
 
 // Renders a model
-void render_model(model_t* model);
+void RenderModel(Model* model);
 
 // Loads shader source code from specified path
 //
 // WARNING: always use destroy_shader_source to free this resource
-fern_error_t load_shader_source(shader_source_t* source, const char* path);
+frnError_t LoadShaderSource(ShaderSource* source, const char* path);
 // Frees resources associated with a shader_source_t
-void destroy_shader_source(shader_source_t* source);
+void DestroyShaderSource(ShaderSource* source);
 
 // Creates a shader program from given shader sources
-fern_error_t create_shader_from_source(
-	shader_t* shader,
-	shader_source_t vertex_source,
-	shader_source_t fragment_source
+frnError_t CreateShaderFromSource(
+	Shader* shader,
+	ShaderSource vertex_source,
+	ShaderSource fragment_source
 );
 
 // Creates a shader program from the given source files
-fern_error_t create_shader(
-	shader_t* shader,
+frnError_t CreateShader(
+	Shader* shader,
 	const char* vertex_path,
 	const char* fragment_path
 );
 
 // Destroys the shader program
-void destroy_shader(shader_t *shader);
+void DestroyShader(Shader *shader);
 
-fern_error_t load_obj(model_t* model, const char* path);
+frnError_t CreateTexture(Texture *texture, TextureParams params, u8 *data,
+                         u32 width, u32 height, int format);
+//void DestroyTexture(Texture* texture);
+
+void UseTexture(Texture* texture, s32 slot);
+
+frnError_t LoadBMP(Texture* texture, TextureParams params, const char* path);
+
+frnError_t LoadOBJ(Model* model, const char* path);
 
 #define FERN_ERROR_LOG
 

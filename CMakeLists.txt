@@ -7,6 +7,7 @@ set(SOURCE_FILES
 	"source/shader.c"
 	"source/material.c"
 	"source/loader.c"
+	"source/texture.c"
 )
 
 add_library(fern ${SOURCE_FILES} "dependencies/glad/src/gl.c")
