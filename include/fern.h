@@ -21,7 +21,6 @@ typedef double f64;
 
 #include <cglm/cglm.h>
 
-
 // Error code type
 //
 // FERN_ERROR_OK (0) when no error occured
@@ -59,6 +58,8 @@ typedef struct {
 } WindowInfo;
 
 typedef struct {
+	u32 width, height;
+
 	GLFWwindow* glfw_window;
 } Renderer;
 
@@ -79,7 +80,8 @@ typedef u32 Shader;
 typedef enum {
 	MATERIAL_PROPERTY_TYPE_MAT4,
 	MATERIAL_PROPERTY_TYPE_TEXTURE2D,
-	MATERIAL_PROPERTY_TYPE_INT
+	MATERIAL_PROPERTY_TYPE_INT,
+	MATERIAL_PROPERTY_TYPE_CAMERA
 } MaterialPropertyType;
 
 typedef struct {
@@ -138,6 +140,15 @@ typedef struct texture {
 	u32 width, height;
 } Texture;
 
+typedef enum projection_type {
+	PROJECTIONTYPE_PERSPECTIVE,
+	PROJECTIONTYPE_ORTHOGONAL
+} ProjectionType;
+
+typedef struct camera {
+	mat4 view_matrix;
+	mat4 projection_matrix;
+} Camera;
 
 const char* get_error_str(frnError_t error);
 
@@ -148,6 +159,8 @@ frnError_t read_file_all(char** contents, u32* size, const char* path);
 //	Creates and initializes a renderer_t and creates a corresponding
 //	window with given parameters.
 frnError_t CreateRenderer(Renderer* renderer, WindowInfo window_info);
+
+void CloseRenderer(Renderer* renderer);
 
 // Frees resources associated with the renderer
 void DestroyRenderer(Renderer* renderer);
@@ -162,7 +175,9 @@ void ClearRenderer(Renderer* renderer);
 void SwapRenderer(Renderer* renderer);
 
 // Polls window events
-void PollEvents();
+void PollEvents(void);
+
+u8 IsKeyDown(Renderer* renderer, u32 keycode);
 
 frnError_t LoadMaterialProperty(MaterialProperty property, Shader shader);
 
@@ -218,6 +233,8 @@ frnError_t CreateTexture(Texture *texture, TextureParams params, u8 *data,
 //void DestroyTexture(Texture* texture);
 
 void UseTexture(Texture* texture, s32 slot);
+
+frnError_t CreateCamera(Camera* camera, ProjectionType ptype, Renderer* renderer);
 
 frnError_t LoadBMP(Texture* texture, TextureParams params, const char* path);
 

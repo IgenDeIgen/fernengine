@@ -135,6 +135,12 @@ frnError_t LoadMaterialProperty(MaterialProperty property, Shader shader) {
 			set_texture(&shader, property.name, property.valueptr);
 			break;
 		}
+		case MATERIAL_PROPERTY_TYPE_CAMERA:
+		{
+			set_mat4(&shader, "view", ((Camera*)property.valueptr)->view_matrix);
+			set_mat4(&shader, "projection", ((Camera*)property.valueptr)->projection_matrix);
+			break;
+		}
 		default:
 			return error_msg(
 				FERN_UNKNOWN_MATERIAL_TYPE,

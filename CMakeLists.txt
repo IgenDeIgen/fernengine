@@ -8,12 +8,14 @@ set(SOURCE_FILES
 	"source/material.c"
 	"source/loader.c"
 	"source/texture.c"
+	"source/input.c"
+	"source/camera.c"
 )
 
 add_library(fern ${SOURCE_FILES} "dependencies/glad/src/gl.c")
 
 add_subdirectory("dependencies/glfw")
 
-target_include_directories(fern PUBLIC "include/fern2.h" "dependencies/glfw/include" "dependencies/glad/include" "dependencies/cglm/include" "dependencies/other")
+target_include_directories(fern PUBLIC "include/fern2.h" "dependencies/glfw/include" "dependencies/glad/include"  "dependencies/cglm/include" "dependencies/other")
 
 target_link_libraries(fern glfw)

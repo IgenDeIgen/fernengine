@@ -106,7 +106,7 @@ frnError_t LoadBMP(Texture* texture, TextureParams params, const char *path) {
 			params,
 			data,
 			(u32)infoheader.width, (u32)infoheader.height,
-			GL_RGB
+			GL_BGR
 		);
 
 		free(data);

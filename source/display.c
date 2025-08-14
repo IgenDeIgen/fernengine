@@ -1,13 +1,20 @@
 #include "../include/fern.h"
-#include "GLFW/glfw3.h"
 
-static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+static void framebuffer_size_callback(GLFWwindow* window, s32 width, s32 height)
 {
     glViewport(0, 0, width, height);
+
+	Renderer* renderer = glfwGetWindowUserPointer(window);
+	renderer->width = (u32)width;
+	renderer->height = (u32)height;
 }
 
 u32 RendererShouldClose(Renderer *renderer) {
 	return glfwWindowShouldClose(renderer->glfw_window);
+}
+
+void CloseRenderer(Renderer* renderer) {
+	glfwSetWindowShouldClose(renderer->glfw_window, GLFW_TRUE);
 }
 
 frnError_t CreateRenderer(Renderer* renderer, WindowInfo window_info) {
@@ -19,7 +26,11 @@ frnError_t CreateRenderer(Renderer* renderer, WindowInfo window_info) {
 		(s32)window_info.width,
 		(s32)window_info.height,
 		window_info.title,
-		NULL, NULL);
+		NULL, NULL
+	);
+
+	renderer->width = window_info.width;
+	renderer->height = window_info.height;
 
 	if(!renderer->glfw_window) {	
 		glfwTerminate();
@@ -55,6 +66,9 @@ frnError_t CreateRenderer(Renderer* renderer, WindowInfo window_info) {
 	glm_mat4_identity(renderer->view);
 	glm_translate(renderer->view, (vec3){0.f, 0.f, -3.f});
 	*/
+
+	glfwSetWindowUserPointer(renderer->glfw_window, renderer);
+
 	return FERN_ERROR_OK;
 }
 
